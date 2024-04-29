@@ -51,6 +51,9 @@ typedef struct {
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
+// #define PRINT_DATA 
+
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -80,14 +83,14 @@ UART_HandleTypeDef huart6;
 osThreadId_t dataManagerHandle;
 const osThreadAttr_t dataManager_attributes = {
   .name = "dataManager",
-  .stack_size = 128 * 4,
+  .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityNormal,
 };
 /* Definitions for dataProcessor */
 osThreadId_t dataProcessorHandle;
 const osThreadAttr_t dataProcessor_attributes = {
   .name = "dataProcessor",
-  .stack_size = 128 * 4,
+  .stack_size = 1024 * 4,
   .priority = (osPriority_t) osPriorityLow,
 };
 /* Definitions for semManager */
@@ -107,10 +110,6 @@ ce_state_s ce_app_state;
 static float32_t frame[NUM_SAMPLES_PER_FRAME * 2];
 static float32_t avg_chirp[NUM_SAMPLES_PER_CHIRP];
 
-bool mainLoopFlag = false;
-bool processLoopFlag = false;
-bool mrgRunFlag = false;
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -125,16 +124,10 @@ void dataManagerTask(void *argument);
 void dataProcessorTask(void *argument);
 
 /* USER CODE BEGIN PFP */
-int32_t read_radar_data(uint16_t* data, uint32_t *num_samples, uint32_t samples_ub);
 void reconf_radar(optimization_type_e requested);
-void process_verbose_cmd(xensiv_radar_presence_handle_t handle,
-        XENSIV_RADAR_PRESENCE_TIMESTAMP time_ms);
-void presence_detection_cb(xensiv_radar_presence_handle_t handle,
-                           const xensiv_radar_presence_event_t* event,
-                           void *data);
+void process_verbose_cmd(xensiv_radar_presence_handle_t handle, XENSIV_RADAR_PRESENCE_TIMESTAMP time_ms);
+void presence_detection_cb(xensiv_radar_presence_handle_t handle, const xensiv_radar_presence_event_t* event, void *data);
 
-void mainLoopStart(void);
-void processLoopInit(void);
 size_t memory_usage = 0;
 uint8_t data_buff[NUM_SAMPLES_PER_FRAME * 3];
 uint16_t buff16[NUM_SAMPLES_PER_FRAME*2] = {0,};
@@ -152,12 +145,15 @@ void custom_free(void* ptr)
   free(ptr);
 }
 
-#define quesizee  1024
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+uint32_t getTick() {
+  return xTaskGetTickCount();
+}
+
 int _write(int file, char* p, int len){
 	HAL_UART_Transmit(&huart1, p, len, 1000);
 	return len;
@@ -172,8 +168,8 @@ void sendPacket(uint8_t detect, uint8_t distance)
   packet[1] = 0xaa;
   packet[2] = 8;
   packet[3] = detect;
-  packet[4] = 60+(HAL_GetTick() % 10);
-  packet[5] = 20+(HAL_GetTick() % 10);
+  packet[4] = 60+(getTick() % 10);
+  packet[5] = 20+(getTick() % 10);
   packet[6] = distance;
   packet[7] = 0;
   packet[8] = 0;
@@ -228,84 +224,6 @@ xensiv_bgt60trxx_mtb_t sensor_instance = {
   }
 };
 
- typedef enum 
- {
-    main_status_none,
-    main_status_init,
-    main_status_int_occured,
-    main_status_preprocess,
-    main_status_process,
-
- }main_status_e; 
-
- static main_status_e main_status = main_status_none;
-
-int hasreset = 0;
-// void queHandler(void)
-// {
-//   que_cmd_e cmd = quePop();
-
-//   switch (cmd)
-//   {
-//     case que_cmd_none:
-//     default:
-//       HAL_Delay(0);
-//     break;
-
-//     case que_cmd_init:
-//       xensiv_bgt60trxx_set_fifo_limit(&sensor_instance.dev, NUM_SAMPLES_PER_FRAME);
-//       xensiv_bgt60trxx_start_frame(&sensor_instance.dev, true);
-
-//     break;
-//     case que_cmd_int_occured:
-//       // LED1_TGG();
-
-//       // mgr.run(); 
-//       if (xensiv_bgt60trxx_get_fifo_data(&sensor_instance.dev, (uint8_t*)data_buff, NUM_SAMPLES_PER_FRAME*3) != 0)
-//       {
-//         PRINT_ERR("FIFO READ FAILED");
-//         hasreset = 1;
-//       }
-//       // PRINT_INFO("o\r\n");
-//       xensiv_bgt60trxx_soft_reset(&sensor_instance.dev, XENSIV_BGT60TRXX_RESET_FIFO);
-      
-//       for (int i = 0; i < NUM_SAMPLES_PER_FRAME; i++) {
-//         buff32[i] = data_buff[i*3+0] << 16;
-//         buff32[i] |= data_buff[i*3+1] << 8;
-//         buff32[i] |= data_buff[i*3+2];
-
-//         buff16[i*2] = buff32[i]>>12;
-//         buff16[i*2+1] = buff32[i] & 0xfff;
-//       }
-
-//       // xensiv_bgt60trxx_soft_reset(&sensor_instance.dev, XENSIV_BGT60TRXX_RESET_FIFO);
-//       quePush(que_cmd_preprocess);
-//     break;
-
-//     case que_cmd_preprocess:
-//       // printf("process start: %d\r\n", HAL_GetTick());
-//       preprocess();
-
-//       quePush(que_cmd_process);
-
-//       // PRINT_INFO("que_cmd_preprocess_done");
-//     break;
-
-//     case que_cmd_process:
-//       // PRINT_INFO("que_cmd_process");
-//       process();
-//       xensiv_bgt60trxx_start_frame(&sensor_instance.dev, true);
-
-//     break;
-
-//     case que_cmd_presence_detection:
-//       PRINT_ERR("presence detected");
-//     break;
-//   }
-
-//   // HAL_Delay(10);
-// }
-
 void initializations(void)
 {
   // sensor init
@@ -351,9 +269,7 @@ void initializations(void)
 		CY_ASSERT(0);
 	}
 }
-uint32_t getTick() {
-  return xTaskGetTickCount();
-}
+
 /* USER CODE END 0 */
 
 /**
@@ -446,7 +362,7 @@ int main(void)
   /* We should never get here as control is now taken by the scheduler */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-//	UART_Config();
+
 	while (1){
     /* USER CODE END WHILE */
 
@@ -481,7 +397,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
   RCC_OscInitStruct.PLL.PLLM = 4;
-  RCC_OscInitStruct.PLL.PLLN = 216;
+  RCC_OscInitStruct.PLL.PLLN = 200;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 9;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -505,7 +421,7 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_7) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_6) != HAL_OK)
   {
     Error_Handler();
   }
@@ -527,7 +443,7 @@ static void MX_I2C1_Init(void)
 
   /* USER CODE END I2C1_Init 1 */
   hi2c1.Instance = I2C1;
-  hi2c1.Init.Timing = 0x20404768;
+  hi2c1.Init.Timing = 0x00C0EAFF;
   hi2c1.Init.OwnAddress1 = 0;
   hi2c1.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
   hi2c1.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
@@ -582,7 +498,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -721,98 +637,6 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
-void mainLoopStart(void) 
-{
-//	mgr.subscribe(sub1);
-	  // mgr.subscribe(sub1);
-	/* Initialize the initial state of ce_app_state */
-	ce_app_state.last_reported_event.state = XENSIV_RADAR_PRESENCE_STATE_ABSENCE;
-	ce_app_state.last_reported_event.range_bin = 0;
-	ce_app_state.last_reported_event.timestamp = 0;
-  // ce_app_state.verbose = true;
-
-	if (xensiv_bgt60trxx_start_frame(&sensor_instance.dev, true) != XENSIV_BGT60TRXX_STATUS_OK)
-	{
-    printf("start frame fail\r\n");
-		CY_ASSERT(0);
-	}
-
-}
-void preprocess(void)
-{
-  // run when subscribtion callback is called.
-  // when using freertos, then subscribe task handle and wait for the release of that handle.
-  // these process will be handled inside mgr.run()
-  static XENSIV_RADAR_PRESENCE_TIMESTAMP last_timestamp = 0;
-  int result;
-  uint16_t *bgt60_buffer_ptr = buff16;//data_buff;
-  float32_t *frame_ptr = &frame[0];
-  for (int32_t sample = 0; sample < NUM_SAMPLES_PER_FRAME * 2; ++sample)
-  {
-    *frame_ptr++ = ((float32_t)(*bgt60_buffer_ptr++) / 4096.0F);
-  }
-
-  /* calculate the average of the chirps first */
-  arm_fill_f32(0, avg_chirp, NUM_SAMPLES_PER_CHIRP);
-
-  for (int chirp = 0; chirp < NUM_CHIRPS_PER_FRAME * 2; chirp++)
-  {
-    arm_add_f32(avg_chirp, &frame[NUM_SAMPLES_PER_CHIRP * chirp], avg_chirp, NUM_SAMPLES_PER_CHIRP);
-  }
-
-  arm_scale_f32(avg_chirp, 1.0f / NUM_CHIRPS_PER_FRAME, avg_chirp, NUM_SAMPLES_PER_CHIRP);
-}
-
-void process(void)
-{
-  if (xensiv_radar_presence_process_frame(handle, avg_chirp, HAL_GetTick()) != XENSIV_RADAR_PRESENCE_OK)
-  {
-    printf("process frame error \r\n");
-  }
-
-}
-
-
-void processLoopInit(void)
-{
-    int result;
-
-    xensiv_radar_presence_set_malloc_free(custom_malloc, custom_free);
-
-    if (xensiv_radar_presence_alloc(&handle, &default_config) != 0)
-    {
-        CY_ASSERT(0);
-    }
-
-    xensiv_radar_presence_set_callback(handle, presence_detection_cb, NULL);
-    result = radar_config_optimizer_init(reconf_radar);
-
-    if(result != ESTATUS_SUCCESS)
-    {
-        printf("[MSG] ERROR: radar_config_optimizer_init failed with error %" PRIi32 "\n", result);
-        CY_ASSERT(0);
-    }
-
-    result = radar_config_optimizer_set_operational_mode(default_config.mode);
-
-    if(result != ESTATUS_SUCCESS)
-    {
-        printf("[MSG] ERROR: radar_config_optimizer_set_operational_mode failed with error %" PRIi32 "\n", result);
-        CY_ASSERT(0);
-    }
-}
-void processLoop(void)
-{
-    int result;
-
-        if (xensiv_radar_presence_process_frame(handle, avg_chirp, HAL_GetTick()) != XENSIV_RADAR_PRESENCE_OK)
-        {
-          printf("process frame error \r\n");
-        }
-        process_verbose_cmd(handle, HAL_GetTick());
-    // }
-}
 
 /*******************************************************************************
  * Function Name: process_verbose_cmd
@@ -965,52 +789,6 @@ void presence_detection_cb(xensiv_radar_presence_handle_t handle,
     ce_app_state.last_reported_event = *event;
 }
 
-/*******************************************************************************
-* Function Name: read_radar_data
-********************************************************************************
-* Summary:
-* This is the function for reading radar data using buffering
-*
-* Parameters:
-*  * data: pointer to radar data
-*  *num_samples: pointer to number of samples per frame
-*  samples_ub: maximum number of samples to be copied at a time from owner task/caller
-*
-* Return:
-*  int32_t: 0 if success
-*
-*******************************************************************************/
-int32_t read_radar_data(uint16_t* data, uint32_t *num_samples, uint32_t samples_ub)
-{
-    if (xensiv_bgt60trxx_get_fifo_data(&sensor_instance.dev,
-            data,
-            NUM_SAMPLES_PER_FRAME) == XENSIV_BGT60TRXX_STATUS_OK)
-    {
-        *num_samples = NUM_SAMPLES_PER_FRAME *2; // in bytes
-
-        // for (int i = 0; i < 20; i++) {
-        //   printf("%x ", data[i]);
-        // }
-        // printf("\r\n");
-        if (samples_ub < NUM_SAMPLES_PER_FRAME *2)
-        {
-            xensiv_bgt60trxx_soft_reset(&sensor_instance.dev,XENSIV_BGT60TRXX_RESET_FIFO );
-        }
-
-      PRINT_NOTIFY("read_radar_success");
-    } else{
-      PRINT_ERR("read radar failed");
-
-      //reset
-        xensiv_bgt60trxx_soft_reset(&sensor_instance.dev,XENSIV_BGT60TRXX_RESET_FIFO );
-        xensiv_bgt60trxx_start_frame(&sensor_instance.dev, true);
-        
-
-    }
-
-    return 0;
-}
-
 /*********************************************************//**********************
 * Function Name: reconf_radar
 **************************************************//******************************
@@ -1058,7 +836,6 @@ void reconf_radar(optimization_type_e requested)
     }
 }
 
-int callback_prevent = 0;
 void HAL_GPIO_EXTI_Callback(uint16_t pin)
 {
   osSemaphoreRelease(semManagerHandle);
@@ -1079,14 +856,16 @@ void dataManagerTask(void *argument)
   for(;;)
   {
    if (osSemaphoreAcquire(semManagerHandle, 0) == osOK) {
-
-    PRINT_INFO("fifo read start");
     if (xensiv_bgt60trxx_get_fifo_data(&sensor_instance.dev, (uint8_t*)data_buff, NUM_SAMPLES_PER_FRAME*3) != 0)
     {
       PRINT_ERR("FIFO READ FAILED");
+      xensiv_bgt60trxx_soft_reset(&sensor_instance.dev, XENSIV_BGT60TRXX_RESET_FIFO);
+      xensiv_bgt60trxx_start_frame(&sensor_instance.dev, true);
+      continue;
     }
 
     xensiv_bgt60trxx_soft_reset(&sensor_instance.dev, XENSIV_BGT60TRXX_RESET_FIFO);
+    xensiv_bgt60trxx_start_frame(&sensor_instance.dev, true);
     
     for (int i = 0; i < NUM_SAMPLES_PER_FRAME; i++) {
       buff32[i] = data_buff[i*3+0] << 16;
@@ -1097,6 +876,9 @@ void dataManagerTask(void *argument)
       buff16[i*2+1] = buff32[i] & 0xfff;
     }
 
+    #ifdef PRINT_DATA
+    
+    #endif
     osSemaphoreRelease(semProcessorHandle);
 
    }else{
@@ -1142,14 +924,18 @@ void dataProcessorTask(void *argument)
 
       arm_scale_f32(avg_chirp, 1.0f / NUM_CHIRPS_PER_FRAME, avg_chirp, NUM_SAMPLES_PER_CHIRP);
 
+#ifdef PRINT_DATA
+      // better raise uart baudrate to make print work @55
+      for (int i = 0; i < NUM_SAMPLES_PER_CHIRP; i++) {
+        printf("%.2f ", avg_chirp[i]);
+      } 
+      printf("\r\n");
+#endif
+
       if (xensiv_radar_presence_process_frame(handle, avg_chirp, getTick()) != XENSIV_RADAR_PRESENCE_OK)
       {
         printf("process frame error \r\n");
       }
-
-
-      process_verbose_cmd(handle, getTick());
-      xensiv_bgt60trxx_start_frame(&sensor_instance.dev, true);
 
     } else {
 
