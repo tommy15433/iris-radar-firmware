@@ -39,6 +39,7 @@
 #include "arm_math.h"
 
 #include "stdlib.h"
+#include "usbd_cdc_if.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -53,7 +54,7 @@ typedef struct {
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 
-// #define PRINT_DATA 
+#define PRINT_DATA 
 
 /* USER CODE END PD */
 
@@ -157,7 +158,7 @@ uint32_t getTick() {
 }
 
 int _write(int file, char* p, int len){
-	HAL_UART_Transmit(&huart1, p, len, 1000);
+  CDC_Transmit_FS(p, len);
 	return len;
 }
 
@@ -859,6 +860,7 @@ void dataManagerTask(void *argument)
 {
   /* init code for USB_DEVICE */
   MX_USB_DEVICE_Init();
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, GPIO_PIN_SET);
   /* USER CODE BEGIN 5 */
   /* Infinite loop */
   for(;;)
