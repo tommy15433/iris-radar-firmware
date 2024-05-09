@@ -78,7 +78,9 @@
 /** 
  * redefining cy macro
 */
-#define CY_ASSERT(obj) ((obj) == false) ? printf("error\r\n") : printf("\r\n")
+#define CY_ASSERT(obj)  \
+    if((obj) == false) { printf("error\r\n"); }
+
 #define XENSIV_BGT60TRXX_RSLT_ERR_INTPIN_INUSE stm_result_intpin_inuse
 
 #define XENSIV_BGT60TRXX_ERROR(res) ((res) == 0) ? 0 : 1
