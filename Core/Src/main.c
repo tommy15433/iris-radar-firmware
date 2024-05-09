@@ -914,9 +914,6 @@ void dataProcessorTask(void *argument)
   {
     if (osSemaphoreAcquire(semProcessorHandle, 0) == osOK) {
 
-      static XENSIV_RADAR_PRESENCE_TIMESTAMP last_timestamp = 0;
-      int result;
-
       uint16_t *bgt60_buffer_ptr = buff16;//data_buff;
       float32_t *frame_ptr = &frame[0];
       for (int32_t sample = 0; sample < NUM_SAMPLES_PER_FRAME * 2; ++sample)

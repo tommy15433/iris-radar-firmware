@@ -160,7 +160,6 @@ int32_t xensiv_bgt60trxx_config(xensiv_bgt60trxx_t* dev,
     int32_t status = xensiv_bgt60trxx_soft_reset(dev,
                                                  XENSIV_BGT60TRXX_RESET_SW);
 
-    printf("bgt60trxx initiaization\r\n");
     if (XENSIV_BGT60TRXX_STATUS_OK == status)
     {
         /* Apply register configuration */
