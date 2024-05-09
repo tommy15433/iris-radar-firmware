@@ -32,8 +32,7 @@
 /*******************************************************************************
 * Macros
 *******************************************************************************/
-// #define XENSIV_BGT60TRXX_ERROR(x)           (((x) == XENSIV_BGT60TRXX_STATUS_OK) ? stm_result_ok :\
-//                                              CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CY_RSLT_MODULE_BOARD_HARDWARE_XENSIV_BGT60TRXX, (x)))
+// #define XENSIV_BGT60TRXX_ERROR(x)           (((x) == XENSIV_BGT60TRXX_STATUS_OK) ? stm_result_ok : CY_RSLT_CREATE(CY_RSLT_TYPE_ERROR, CY_RSLT_MODULE_BOARD_HARDWARE_XENSIV_BGT60TRXX, (x)))
 
 static stm_gpio_t NC = {
     .gpio = 0,
@@ -49,12 +48,12 @@ static inline void set_pin(stm_gpio_int_t* ref_pin, stm_gpio_t pin);
 
 static inline void free_pin(stm_gpio_int_t ref_pin);
 
-static stm_result_t config_int(stm_gpio_int_t* intpin,
-                            stm_gpio_t pin,
-                            bool init,
-                            uint8_t intr_priority,
-                            cyhal_gpio_event_callback_t callback,
-                            void* callback_arg);
+// static stm_result_t config_int(stm_gpio_int_t* intpin,
+//                             stm_gpio_t pin,
+//                             bool init,
+//                             uint8_t intr_priority,
+//                             cyhal_gpio_event_callback_t callback,
+//                             void* callback_arg);
 
 
 
@@ -138,13 +137,13 @@ stm_result_t xensiv_bgt60trxx_mtb_init(xensiv_bgt60trxx_mtb_t* obj,
 }
 
 
-stm_result_t xensiv_bgt60trxx_mtb_interrupt_init(xensiv_bgt60trxx_mtb_t* obj,
-                                              uint16_t fifo_limit,
-                                              stm_gpio_t irqpin,
-                                              uint8_t intr_priority,
-                                              cyhal_gpio_event_callback_t callback,
-                                              void* callback_arg)
-{
+//stm_result_t xensiv_bgt60trxx_mtb_interrupt_init(xensiv_bgt60trxx_mtb_t* obj,
+//                                              uint16_t fifo_limit,
+//                                              stm_gpio_t irqpin,
+//                                              uint8_t intr_priority,
+//                                              cyhal_gpio_event_callback_t callback,
+//                                              void* callback_arg)
+//{
 
     // unused. code generator will do will take care of it
 
@@ -175,7 +174,7 @@ stm_result_t xensiv_bgt60trxx_mtb_interrupt_init(xensiv_bgt60trxx_mtb_t* obj,
     // }
 
     // return result;
-}
+//}
 
 
 void xensiv_bgt60trxx_mtb_free(xensiv_bgt60trxx_mtb_t* obj)
@@ -204,8 +203,8 @@ void xensiv_bgt60trxx_mtb_free(xensiv_bgt60trxx_mtb_t* obj)
 /*******************************************************************************
  * Platform functions implementation
  ********************************************************************************/
-static void spi_set_data_width(SPI_HandleTypeDef* base, uint32_t data_width)
-{
+//static void spi_set_data_width(SPI_HandleTypeDef* base, uint32_t data_width)
+//{
     // no need to set data width?
 
     // CY_ASSERT(CY_SCB_SPI_IS_DATA_WIDTH_VALID(data_width));
@@ -216,7 +215,7 @@ static void spi_set_data_width(SPI_HandleTypeDef* base, uint32_t data_width)
     // CY_REG32_CLR_SET(SCB_RX_CTRL(base),
     //                  SCB_RX_CTRL_DATA_WIDTH,
     //                  (uint32_t)data_width - 1U);
-}
+//}
 
 
 int32_t xensiv_bgt60trxx_platform_spi_transfer(void* iface,
@@ -388,13 +387,13 @@ static inline void free_pin(stm_gpio_int_t ref_pin)
 }
 
 
-static stm_result_t config_int(stm_gpio_int_t* intpin,
-                            stm_gpio_t pin,
-                            bool init,
-                            uint8_t intr_priority,
-                            cyhal_gpio_event_callback_t callback,
-                            void* callback_arg)
-{
+// static stm_result_t config_int(stm_gpio_int_t* intpin,
+//                             stm_gpio_t pin,
+//                             bool init,
+//                             uint8_t intr_priority,
+//                             cyhal_gpio_event_callback_t callback,
+//                             void* callback_arg)
+// {
     // unused config. code generator should do the thing
 
     // stm_result_t result = stm_result_ok;
@@ -429,7 +428,7 @@ static stm_result_t config_int(stm_gpio_int_t* intpin,
     // }
 
     // return result;
-}
+// }
 
 
 

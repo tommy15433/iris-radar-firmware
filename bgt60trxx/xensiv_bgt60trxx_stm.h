@@ -69,7 +69,7 @@
     (CY_RSLT_CREATE(stm_result_tYPE_ERROR, CY_RSLT_MODULE_BOARD_HARDWARE_XENSIV_BGT60TRXX, XENSIV_BGT60TRXX_STATUS_DEV_ERROR))
 
 /** An attempt was made to reconfigure the interrupt pin */
-//#define XENSIV_BGT60TRXX_RSLT_ERR_INTPIN_INUSE\
+//#define XENSIV_BGT60TRXX_RSLT_ERR_INTPIN_INUSE
 //    (CY_RSLT_CREATE(stm_result_tYPE_ERROR, CY_RSLT_MODULE_BOARD_HARDWARE_XENSIV_BGT60TRXX, 0x100))
 
 
@@ -78,7 +78,7 @@
 /** 
  * redefining cy macro
 */
-#define CY_ASSERT(obj) ((obj) == false) ? printf("error\r\n") : printf("")
+#define CY_ASSERT(obj) ((obj) == false) ? printf("error\r\n") : printf("\r\n")
 #define XENSIV_BGT60TRXX_RSLT_ERR_INTPIN_INUSE stm_result_intpin_inuse
 
 #define XENSIV_BGT60TRXX_ERROR(res) ((res) == 0) ? 0 : 1

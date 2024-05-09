@@ -25,7 +25,7 @@
 
 #include "ifx_sensor_dsp.h"
 
-#define FLT_EPSILON 1.19209290E-07F // decimal constant
+//#define FLT_EPSILON 1.19209290E-07F // decimal constant
 
 /*
    ==============================================================================
