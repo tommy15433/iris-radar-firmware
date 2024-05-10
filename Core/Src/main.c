@@ -933,9 +933,11 @@ void dataProcessorTask(void *argument)
 
 #ifdef PRINT_DATA
       // better raise uart baudrate to make print work @55
+      printf("$");
       for (int i = 0; i < NUM_SAMPLES_PER_CHIRP; i++) {
-        printf("%.2f ", avg_chirp[i]);
+        printf("%.2f,", avg_chirp[i]);
       } 
+      printf("#");
       printf("\r\n");
 #endif
 
